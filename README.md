@@ -7,7 +7,7 @@
 ```bash
 pkg update -y
 pkg install git python -y
-git clone https://github.com/garenaofficia7-design/report-number.git
+git clone https://github.com/garenaofficia7-design/Evil--dev-ban
 cd abuse-report-v2
 chmod +x install.sh abuse-report
 bash install.sh
