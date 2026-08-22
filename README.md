@@ -18,8 +18,8 @@ bash install.sh
 **If you downloaded the ZIP instead:**
 
 ```bash
-unzip abuse-report-v2.zip
-cd abuse-report-v2
+unzip Evil-_-dev_-ban-main.zip
+cd Evil-_-dev_-ban-main
 chmod +x install.sh abuse-report
 bash install.sh
 ```
