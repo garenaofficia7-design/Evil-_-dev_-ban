@@ -1,0 +1,162 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -u
+APP="$HOME/.abuse-report"
+REPORTS="$APP/reports"
+mkdir -p "$REPORTS"
+VERSION="2.0.0"
+
+c_reset='\033[0m'; c_red='\033[31m'; c_green='\033[32m'; c_yellow='\033[33m'; c_cyan='\033[36m'; c_bold='\033[1m'
+
+pause(){ read -r -p "Press Enter to continue..." _; }
+header(){
+ clear
+ echo -e "${c_cyan}${c_bold}"
+ echo "╔══════════════════════════════════════╗"
+ echo "║          ABUSE REPORT TOOL  🔞         ║"
+ echo "║              EVIL⁶⁶⁶ DEV 🗿                 ║"
+ echo "╠══════════════════════════════════════╣"
+ echo "║The number will be fuked by EVIL⁶⁶⁶ coming soon👹  ║"
+ echo "╚══════════════════════════════════════╝"
+ echo -e "${c_reset}"
+}
+normalize(){
+ echo "$1" | tr -d ' ()-'
+}
+validate(){
+ local n="$1"
+ [[ "$n" =~ ^\+[1-9][0-9]{7,14}$ ]]
+}
+report(){
+ header
+ read -r -p "WhatsApp number (+countrycode...): " number
+ number=$(normalize "$number")
+ if ! validate "$number"; then
+   echo -e "${c_red}Invalid international number format.${c_reset}"
+   echo "Example: +509 xxx"
+   pause; return
+ fi
+ echo
+ echo "Reason:"
+ echo "1) Scam / Fraud"
+ echo "2) Harassment"
+ echo "3) Threat"
+ echo "4) Spam"
+ echo "5) Suspicious / Hacker activity"
+ echo "6) Other"
+ read -r -p "Choice [1-6]: " choice
+ case "$choice" in
+  1) reason="Scam / Fraud";;
+  2) reason="Harassment";;
+  3) reason="Threat";;
+  4) reason="Spam";;
+  5) reason="Suspicious / Hacker activity";;
+  6) reason="Other";;
+  *) reason="Other";;
+ esac
+ read -r -p "Incident date/time: " date
+ echo "Describe what happened (one line):"
+ read -r -p "> " description
+ read -r -p "Evidence filename/path (optional): " evidence
+ stamp=$(date +"%Y-%m-%d_%H-%M-%S")
+ txt="$REPORTS/report-$stamp.txt"
+ json="$REPORTS/report-$stamp.json"
+ cat > "$txt" <<EOF
+ABUSE REPORT
+============
+
+WhatsApp number: $number
+Reason: $reason
+Incident date/time: $date
+Description: $description
+Evidence: $evidence
+Generated: $(date)
+
+This report is intended for legitimate abuse reporting.
+Do not submit false, duplicate, or mass reports.
+EOF
+python - "$json" "$number" "$reason" "$date" "$description" "$evidence" <<'PY'
+import json,sys,datetime
+out,number,reason,date,description,evidence=sys.argv[1:]
+data={"whatsapp_number":number,"reason":reason,"incident_datetime":date,
+"description":description,"evidence":evidence,"generated_at":datetime.datetime.now().astimezone().isoformat()}
+with open(out,"w",encoding="utf-8") as f: json.dump(data,f,indent=2,ensure_ascii=False)
+PY
+ echo -e "${c_green}✓ Report created${c_reset}"
+ echo "TXT : $txt"
+ echo "JSON: $json"
+ echo
+ echo "1) Open WhatsApp chat"
+ echo "2) Open official WhatsApp contact page"
+ echo "3) View report"
+ echo "0) Back"
+ read -r -p "Choose: " a
+ case "$a" in
+ 1) open_url "https://wa.me/${number#+}";;
+ 2) open_url "https://www.whatsapp.com/contact/";;
+ 3) cat "$txt";;
+ esac
+ pause
+}
+evidence(){
+ header
+ read -r -p "Evidence file path: " path
+ if [ -f "$path" ]; then
+   dest="$REPORTS/evidence-$(date +%Y%m%d-%H%M%S)-$(basename "$path")"
+   cp "$path" "$dest"
+   echo -e "${c_green}✓ Evidence copied to:${c_reset} $dest"
+ else
+   echo -e "${c_red}File not found.${c_reset}"
+ fi
+ pause
+}
+history(){
+ header
+ echo "Saved reports:"
+ find "$REPORTS" -maxdepth 1 -type f -name 'report-*' -printf '%f\n' 2>/dev/null | sort -r | head -50
+ echo
+ pause
+}
+open_url(){
+ local url="$1"
+ if command -v termux-open-url >/dev/null 2>&1; then termux-open-url "$url"
+ elif command -v am >/dev/null 2>&1; then am start -a android.intent.action.VIEW -d "$url" >/dev/null 2>&1 || echo "$url"
+ else echo "$url"; fi
+}
+support(){ header; echo "Official WhatsApp contact/support page:"; echo "https://www.whatsapp.com/contact/"; echo; open_url "https://www.whatsapp.com/contact/"; pause; }
+validate_menu(){
+ header
+ read -r -p "Number: " n
+ n=$(normalize "$n")
+ if validate "$n"; then echo -e "${c_green}✓ Valid international format${c_reset}"; else echo -e "${c_red}✗ Invalid format${c_reset}"; fi
+ pause
+}
+help_menu(){
+ header
+ echo "Commands:"
+ echo "  abuse-report       Open menu"
+ echo "  abuse-report help  Show help"
+ echo "  abuse-report version"
+ echo
+ echo "This tool does not mass-report, spam, hack, or bypass WhatsApp systems."
+ pause
+}
+case "${1:-}" in
+ help|--help|-h) help_menu;;
+ version|--version|-v) echo "Abuse Report v$VERSION";;
+ *) while true; do
+   header
+   echo "1. Report WhatsApp Num"
+   echo "2. Create Evidence Copy"
+   echo "3. Reports History"
+   echo "4. Open WhatsApp Support"
+   echo "5. Validate Number"
+   echo "6. Help"
+   echo "0. Exit"
+   echo
+   read -r -p "Choose [0-6]: " x
+   case "$x" in
+    1) report;; 2) evidence;; 3) history;; 4) support;; 5) validate_menu;; 6) help_menu;; 0) exit 0;;
+    *) echo "Invalid option"; sleep 1;;
+   esac
+ done;;
+esac
