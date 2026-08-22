@@ -64,7 +64,7 @@ pkg install termux-api -y
 
 ## Whatsapp receives the complaint and is verifying it, go to the victim's number, report it 50 times, block 10 times
 
-## This tool is created by Druzz, it is free to use
+## This tool is created by eviltech, it is free to use
 
 > **For method more powerful DM**
 > +2349134847118
